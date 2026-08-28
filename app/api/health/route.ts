@@ -1,1 +1,1 @@
-export async function GET(){return Response.json({ok:true,application:"SEO Content ERP",version:"0.4.0",timestamp:new Date().toISOString()})}
+export async function GET(){return Response.json({ok:true,application:"SEO Content ERP",version:"0.5.0",timestamp:new Date().toISOString()})}
