@@ -1,0 +1,1 @@
+export default function Articles(){return <main className="main"><div className="title">Artigos</div><p className="subtitle">Produção, validação e publicação.</p><section className="section card"><table className="table"><tbody><tr><td>Nenhum artigo ainda</td><td><span className="status">Aguardando</span></td></tr></tbody></table></section></main>}

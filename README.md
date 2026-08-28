@@ -1,0 +1,1 @@
+# Pojeto10k — SEO Content ERP\n\nAplicação Next.js pronta para importação direta na Vercel.\n
