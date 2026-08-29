@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
+import type { SerpResearch } from "@/lib/dataforseo";
 
-const DEFAULT_MODEL = "gemini-2.5-flash";
+const DEFAULT_MODEL = "gemini-3.6-flash";
 
 function client() {
   const key = process.env.GEMINI_API_KEY;
@@ -20,28 +21,38 @@ function parseJson(text: string) {
   return JSON.parse(clean.slice(start, end + 1));
 }
 
-export async function researchKeyword(keyword: string) {
+export async function researchKeyword(
+  keyword: string,
+  serp: SerpResearch
+) {
   const ai = client();
   const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
+  const serpEvidence = JSON.stringify(serp, null, 2);
 
   const prompt = `
-Você é um pesquisador SEO. Pesquise na web a SERP para:
+Você é um pesquisador e estrategista SEO. Analise a palavra-chave:
 "${keyword}"
 
-Use a Pesquisa Google para encontrar até 5 resultados orgânicos relevantes.
-Não considere anúncios como resultados orgânicos.
+Abaixo estão 10 resultados orgânicos reais do Google Brasil, obtidos agora
+pelo DataForSEO. Selecione os 5 resultados que representam conteúdos
+concorrentes mais relevantes para a intenção de busca. Evite priorizar anúncios,
+resultados pouco relacionados, páginas institucionais sem conteúdo, vídeos,
+fóruns ou PDFs quando houver artigos concorrentes melhores.
 
-Para cada resultado informe: posição aproximada, título, URL, domínio,
-resumo, headings/tópicos importantes e assuntos abordados.
+DADOS REAIS DA SERP:
+${serpEvidence}
+
+Use somente os títulos, URLs, domínios e descrições fornecidos como evidência
+da SERP. Não afirme que leu ou auditou o conteúdo completo das páginas.
+Headings e tópicos que não puderem ser confirmados devem ser inferidos com
+cautela e identificados como sugestões, nunca como fatos observados.
+Não copie textos e não invente URLs, métricas, estatísticas ou fontes.
 
 Depois informe: intenção de busca, explicação da intenção, tópicos comuns,
 lacunas de conteúdo, oportunidades de diferenciação, palavras-chave
 relacionadas, perguntas frequentes e estrutura H2/H3 recomendada.
 
-Não copie textos. Não invente URLs, estatísticas ou fontes.
-Se algo não puder ser confirmado, deixe vazio ou explique.
-Retorne SOMENTE JSON válido.
-
+Retorne SOMENTE JSON válido seguindo exatamente esta estrutura:
 {
   "keyword": "${keyword}",
   "intent": "",
@@ -72,9 +83,9 @@ Retorne SOMENTE JSON válido.
       model,
       contents: prompt,
       config: {
-        tools: [{ googleSearch: {} }],
-        temperature: 0.2
-      }
+        temperature: 0.2,
+        responseMimeType: "application/json",
+      },
     });
 
     const text = response.text?.trim();
@@ -88,7 +99,7 @@ Retorne SOMENTE JSON válido.
       message.toLowerCase().includes("quota")
     ) {
       throw new Error(
-        "A cota gratuita do Gemini foi atingida. Aguarde a renovação da cota diária. O sistema está usando gemini-2.5-flash."
+        `A cota do Gemini foi atingida. Aguarde a renovação ou verifique a chave. Modelo atual: ${model}.`
       );
     }
     throw error;
