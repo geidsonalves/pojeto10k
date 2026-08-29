@@ -14,7 +14,7 @@ export default function Keywords(){
  async function save(e:React.FormEvent){e.preventDefault();setError("");const r=await fetch("/api/keywords",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({site_id:siteId,keyword,category,priority})});const j=await r.json();if(!r.ok){setError(j.error||"Erro");return}setKeyword("");setCategory("");setMsg("Palavra-chave adicionada à fila.");load()}
  async function remove(id:string){if(confirm("Excluir esta palavra-chave?")){await fetch("/api/keywords/"+id,{method:"DELETE"});load()}}
  async function researchSerp(k:string){setLoading(k);setError("");setResearch(null);try{const r=await fetch("/api/research",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({keyword:k})});const j=await r.json();if(!r.ok)throw new Error(j.error);setResearch(j.research)}catch(e){setError(e instanceof Error?e.message:"Erro na pesquisa.")}finally{setLoading("")}}
- return <Shell><div className="title">Palavras-chave</div><p className="subtitle">Fila SEO e pesquisa SERP com Gemini + Google Search.</p>
+ return <Shell><div className="title">Palavras-chave</div><p className="subtitle">Fila SEO com SERP real do Google via DataForSEO + análise do Gemini.</p>
  {error&&<div className="error">{error}</div>}{msg&&<div className="success">{msg}</div>}
  <section className="section card"><form className="form" onSubmit={save}>
  <label>Site<select className="input" required value={siteId} onChange={e=>setSiteId(e.target.value)}><option value="">Selecione</option>{sites.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
