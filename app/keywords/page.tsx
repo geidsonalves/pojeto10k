@@ -6,6 +6,7 @@ import Shell from "@/components/Shell";
 type Site = { id: string; name: string };
 type KeywordItem = {
   id: string;
+  site_id: string;
   keyword: string;
   category: string | null;
   priority: string;
