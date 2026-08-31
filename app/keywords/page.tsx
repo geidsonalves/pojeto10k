@@ -63,6 +63,7 @@ export default function Keywords() {
   const [generatingArticle, setGeneratingArticle] = useState(false);
   const [savingArticle, setSavingArticle] = useState(false);
   const [savedArticleId, setSavedArticleId] = useState("");
+  const [savePassword, setSavePassword] = useState("");
 
   async function load() {
     const [sitesResponse, keywordsResponse] = await Promise.all([
@@ -174,13 +175,20 @@ export default function Keywords() {
 
   async function saveGeneratedArticle() {
     if (!article || !activeKeyword) return;
+    if (!savePassword) {
+      setError("Digite a senha de salvamento.");
+      return;
+    }
     setSavingArticle(true);
     setError("");
     setMessage("");
     try {
       const response = await fetch("/api/articles", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-save-password": savePassword,
+        },
         body: JSON.stringify({
           siteId: activeKeyword.site_id,
           keywordId: activeKeyword.id,
@@ -389,9 +397,22 @@ export default function Keywords() {
           <p className="muted">
             {article.wordCount} palavras • Score SEO {article.seoScore}/100
           </p>
+          <label style={{ display: "block", maxWidth: 360, marginBottom: 12 }}>
+            Senha de salvamento
+            <input
+              className="input"
+              type="password"
+              autoComplete="current-password"
+              value={savePassword}
+              onChange={(event) => setSavePassword(event.target.value)}
+              placeholder="Digite a senha configurada na Vercel"
+            />
+          </label>
           <button
             className="button"
-            disabled={savingArticle || Boolean(savedArticleId)}
+            disabled={
+              savingArticle || Boolean(savedArticleId) || !savePassword
+            }
             onClick={saveGeneratedArticle}
           >
             {savedArticleId
