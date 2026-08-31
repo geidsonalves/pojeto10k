@@ -57,8 +57,11 @@ export default function Keywords() {
   const [error, setError] = useState("");
   const [research, setResearch] = useState<Research | null>(null);
   const [article, setArticle] = useState<Article | null>(null);
+  const [activeKeyword, setActiveKeyword] = useState<KeywordItem | null>(null);
   const [loading, setLoading] = useState("");
   const [generatingArticle, setGeneratingArticle] = useState(false);
+  const [savingArticle, setSavingArticle] = useState(false);
+  const [savedArticleId, setSavedArticleId] = useState("");
 
   async function load() {
     const [sitesResponse, keywordsResponse] = await Promise.all([
@@ -107,7 +110,10 @@ export default function Keywords() {
     }
   }
 
-  async function researchSerp(value: string) {
+  async function researchSerp(item: KeywordItem) {
+    const value = item.keyword;
+    setActiveKeyword(item);
+    setSavedArticleId("");
     setLoading(value);
     setError("");
     setMessage("");
@@ -162,6 +168,36 @@ export default function Keywords() {
       );
     } finally {
       setGeneratingArticle(false);
+    }
+  }
+
+  async function saveGeneratedArticle() {
+    if (!article || !activeKeyword) return;
+    setSavingArticle(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/api/articles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          siteId: activeKeyword.site_id,
+          keywordId: activeKeyword.id,
+          article,
+        }),
+      });
+      const json = await readJsonResponse(response);
+      if (!response.ok) {
+        throw new Error(json.error || `Falha HTTP ${response.status}`);
+      }
+      setSavedArticleId(json.article.id);
+      setMessage("Artigo salvo com sucesso na área Artigos.");
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "Erro ao salvar o artigo."
+      );
+    } finally {
+      setSavingArticle(false);
     }
   }
 
@@ -255,7 +291,7 @@ export default function Keywords() {
                     <button
                       className="button"
                       disabled={loading === item.keyword}
-                      onClick={() => researchSerp(item.keyword)}
+                      onClick={() => researchSerp(item)}
                     >
                       {loading === item.keyword
                         ? "Pesquisando..."
@@ -352,6 +388,22 @@ export default function Keywords() {
           <p className="muted">
             {article.wordCount} palavras • Score SEO {article.seoScore}/100
           </p>
+          <button
+            className="button"
+            disabled={savingArticle || Boolean(savedArticleId)}
+            onClick={saveGeneratedArticle}
+          >
+            {savedArticleId
+              ? "Artigo salvo"
+              : savingArticle
+                ? "Salvando..."
+                : "Salvar em Artigos"}
+          </button>
+          {savedArticleId && (
+            <p>
+              <a href="/articles">Abrir a área Artigos →</a>
+            </p>
+          )}
           <p>
             <strong>Slug:</strong> {article.slug}
           </p>
