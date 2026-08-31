@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { supabase } from "@/lib/supabase";
 
 export const runtime = "nodejs";
@@ -5,6 +6,28 @@ export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
+    const expectedPassword = process.env.APP_SAVE_PASSWORD;
+    const suppliedPassword = req.headers.get("x-save-password") || "";
+
+    if (!expectedPassword) {
+      return Response.json(
+        { error: "APP_SAVE_PASSWORD não configurada na Vercel." },
+        { status: 503 }
+      );
+    }
+
+    const expected = Buffer.from(expectedPassword);
+    const supplied = Buffer.from(suppliedPassword);
+    const passwordIsValid =
+      expected.length === supplied.length &&
+      timingSafeEqual(expected, supplied);
+
+    if (!passwordIsValid) {
+      return Response.json(
+        { error: "Senha de salvamento inválida." },
+        { status: 401 }
+      );
+    }
     const body = await req.json();
     const article = body?.article;
     const siteId = String(body?.siteId || "").trim();
